@@ -67,26 +67,28 @@ class DatasetErdosRenyi(Dataset):
         return graphs
 
 class DatasetErdosRenyiNodes(Dataset):
-    def __init__(self, n_samples=None, p=0.25, partition='train', overfit=False, directed=True):
-        self.n_nodes = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    def __init__(self, n_samples=None, p=0.25, partition='train', overfit=False, directed=True, seed=42, n_nodes=10):
+        # self.n_nodes = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        self.n_nodes = n_nodes
         self.n_samples = n_samples
         self.directed = directed
         self.p = p
         self.partition = partition
-        if self.partition == 'train':
-            self.seed = 0
-            self.n_samples = 5000
-        elif self.partition == 'val':
-            self.seed = 1
-            self.n_samples = 500
-        elif self.partition == 'test':
-            self.seed = 2
-            self.n_samples = 500
+        if self.n_samples is None:
+            if self.partition == 'train':
+                self.seed = 0
+                self.n_samples = 5000
+            elif self.partition == 'val':
+                self.seed = 1
+                self.n_samples = 500
+            elif self.partition == 'test':
+                self.seed = 2
+                self.n_samples = 500
 
-        self.n_samplesxnodes = int(self.n_samples / len(self.n_nodes))
-        if overfit:
-            self.n_samplesxnodes = 10
-            self.seed = 3
+        # self.n_samplesxnodes = int(self.n_samples / len(self.n_nodes))
+        else:
+            # self.n_samplesxnodes = 10
+            self.seed = seed
 
 
         self.graphs = self.create()
@@ -94,13 +96,13 @@ class DatasetErdosRenyiNodes(Dataset):
     def create(self):
         graphs = []
         random.seed(self.seed)
-        for i in range(self.n_samplesxnodes):
-            for n_nodes in self.n_nodes:
-                G = nx.gnp_random_graph(n_nodes, self.p, directed=False)
-                if self.directed:
-                    G = G.to_directed()
-                G = gl.networkx2graph(G)
-                graphs.append(G)
+        for i in range(self.n_samples):
+            
+            G = nx.gnp_random_graph(self.n_nodes, self.p, directed=False)
+            if self.directed:
+                G = G.to_directed()
+            G = gl.networkx2graph(G)
+            graphs.append(G)
         random.shuffle(graphs)
         return graphs
 
@@ -146,37 +148,38 @@ class GraphBatchToGraph(Dataset):
 
 
 class DatasetCommunity(Dataset):
-    def __init__(self, n_samples=None, partition='train', num_communities=2):
+    def __init__(self, n_samples=None, partition='train', num_communities=2, n_nodes=10, seed=42):
 
         self.partition = partition
         self.num_communities = num_communities
+        self.c_sizes = [n_nodes//num_communities] * num_communities
 
         if n_samples is None:
             if partition == 'train':
                 self.n_samples = 5000
-                seed = 0
+                self.seed = 0
             elif partition == 'val':
                 self.n_samples = 500
-                seed = 1
+                self.seed = 1
             elif partition == 'test':
                 self.n_samples = 500
-                seed = 2
+                self.seed = 2
             else:
                 raise Exception("Wrong seed")
         else:
             self.n_samples = n_samples
-            seed = 3
-        self.graphs = self.create(seed)
+            self.seed = seed
+        self.graphs = self.create()
 
-
-    def create(self, seed=None):
-        np.random.seed(seed)
+    def create(self):
+        np.random.seed(self.seed)
         graphs = []
         print('Creating dataset with ', self.num_communities, ' communities')
 
-        # c_sizes = [15] * num_communities
+        c_sizes = self.c_sizes
         for k in range(self.n_samples):
-            c_sizes = np.random.choice([6, 7, 8, 9, 10], self.num_communities)
+            # c_sizes = np.random.choice([6, 7, 8, 9, 10], self.num_communities)
+            # c_sizes = np.random.choice([100], self.num_communities)
             graphs.append(n_community(c_sizes, p_inter=0.01))
         return graphs
 
@@ -185,8 +188,8 @@ class DatasetCommunity(Dataset):
 def n_community(c_sizes, p_inter=0.01):
     graphs = [nx.gnp_random_graph(c_sizes[i], 0.7, seed=i) for i in range(len(c_sizes))]
     G = nx.disjoint_union_all(graphs)
-    communities = list(nx.connected_component_subgraphs(G))
-    #communities = list(G.subgraph(c) for c in nx.connected_components(G))[0]
+    # communities = list(nx.connected_component_subgraphs(G))
+    communities = list(G.subgraph(c) for c in nx.connected_components(G)) #[0]
     for i in range(len(communities)):
         subG1 = communities[i]
         nodes1 = list(subG1.nodes())

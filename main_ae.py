@@ -53,6 +53,9 @@ parser.add_argument('--clamp', type=int, default=1, metavar='N',
                     help='clamp the output of the coords function if get too large (safe mechanism, it is not activated in practice)')
 parser.add_argument('--weight_decay', type=float, default=1e-16, metavar='N',
                     help='clamp the output of the coords function if get too large')
+parser.add_argument('--n_nodes', type=int, default=10, metavar='N',
+                    help='Nb of nodes in graphs. Defaults to 10.')
+
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -66,11 +69,11 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 utils.create_folders(args)
 
 #
-dataset = d_selector.retrieve_dataset(args.dataset, partition="train", directed=True)
+dataset = d_selector.retrieve_dataset(args.dataset, partition="train", directed=True, n_nodes=args.n_nodes)
 train_loader = Dataloader(dataset, batch_size=1)
-dataset = d_selector.retrieve_dataset(args.dataset, partition="val", directed=True)
+dataset = d_selector.retrieve_dataset(args.dataset, partition="val", directed=True, n_nodes=args.n_nodes)
 val_loader = Dataloader(dataset, batch_size=1, shuffle=False)
-dataset = d_selector.retrieve_dataset(args.dataset, partition="test", directed=True)
+dataset = d_selector.retrieve_dataset(args.dataset, partition="test", directed=True, n_nodes=args.n_nodes)
 test_loader = Dataloader(dataset, batch_size=1, shuffle=False)
 
 if args.model == 'ae':
