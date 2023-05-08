@@ -67,13 +67,16 @@ class DatasetErdosRenyi(Dataset):
         return graphs
 
 class DatasetErdosRenyiNodes(Dataset):
-    def __init__(self, n_samples=None, p=0.25, partition='train', overfit=False, directed=True, seed=42, n_nodes=10):
+    def __init__(self, n_samples=None, p=0.25, partition='train', overfit=False, directed=True, seed=42, n_nodes=10,
+                 with_pos=False):
         # self.n_nodes = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         self.n_nodes = n_nodes
         self.n_samples = n_samples
         self.directed = directed
         self.p = p
         self.partition = partition
+        self.with_pos = with_pos
+
         if self.n_samples is None:
             if self.partition == 'train':
                 self.seed = 0
@@ -101,7 +104,7 @@ class DatasetErdosRenyiNodes(Dataset):
             G = nx.gnp_random_graph(self.n_nodes, self.p, directed=False)
             if self.directed:
                 G = G.to_directed()
-            G = gl.networkx2graph(G)
+            G = gl.networkx2graph(G, with_pos=self.with_pos)
             graphs.append(G)
         random.shuffle(graphs)
         return graphs
@@ -148,11 +151,13 @@ class GraphBatchToGraph(Dataset):
 
 
 class DatasetCommunity(Dataset):
-    def __init__(self, n_samples=None, partition='train', num_communities=2, n_nodes=10, seed=42):
+    def __init__(self, n_samples=None, partition='train', num_communities=2, n_nodes=10, seed=42,
+                 with_pos=False):
 
         self.partition = partition
         self.num_communities = num_communities
         self.c_sizes = [n_nodes//num_communities] * num_communities
+        self.with_pos = with_pos
 
         if n_samples is None:
             if partition == 'train':
@@ -180,12 +185,12 @@ class DatasetCommunity(Dataset):
         for k in range(self.n_samples):
             # c_sizes = np.random.choice([6, 7, 8, 9, 10], self.num_communities)
             # c_sizes = np.random.choice([100], self.num_communities)
-            graphs.append(n_community(c_sizes, p_inter=0.01))
+            graphs.append(n_community(c_sizes, self.with_pos, p_inter=0.01))
         return graphs
 
 
 
-def n_community(c_sizes, p_inter=0.01):
+def n_community(c_sizes, with_pos, p_inter=0.01):
     graphs = [nx.gnp_random_graph(c_sizes[i], 0.7, seed=i) for i in range(len(c_sizes))]
     G = nx.disjoint_union_all(graphs)
     # communities = list(nx.connected_component_subgraphs(G))
@@ -206,7 +211,7 @@ def n_community(c_sizes, p_inter=0.01):
                 G.add_edge(nodes1[0], nodes2[0])
     #print('connected comp: ', len(list(nx.connected_component_subgraphs(G))))
     G = G.to_directed()
-    G = gl.networkx2graph(G)
+    G = gl.networkx2graph(G, with_pos=with_pos)
     return G
 
 

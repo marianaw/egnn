@@ -20,6 +20,8 @@ parser.add_argument('--dataset', type=str, default='community_ours', metavar='N'
                     help='community_ours | community_overfit | erdosrenyinodes_0.25_none | erdosrenyinodes_0.25_overfit')
 parser.add_argument('--no-cuda', action='store_false', default=False,
                     help='we  did not use cuda in this experiment')
+parser.add_argument('--with_pos', action='store_true', default=True,
+                    help='we  did not use cuda in this experiment')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log_interval', type=int, default=100, metavar='N',
@@ -70,11 +72,11 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 utils.create_folders(args)
 
 #
-dataset = d_selector.retrieve_dataset(args.dataset, partition="train", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="train", directed=True, n_nodes=args.n_nodes)
 train_loader = Dataloader(dataset, batch_size=1)
-dataset = d_selector.retrieve_dataset(args.dataset, partition="val", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="val", directed=True, n_nodes=args.n_nodes)
 val_loader = Dataloader(dataset, batch_size=1, shuffle=False)
-dataset = d_selector.retrieve_dataset(args.dataset, partition="test", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="test", directed=True, n_nodes=args.n_nodes)
 test_loader = Dataloader(dataset, batch_size=1, shuffle=False)
 
 if args.model == 'ae':

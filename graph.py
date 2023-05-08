@@ -3,9 +3,11 @@ import networkx as nx
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+POS_SEED = 10
+
 
 class Graph:
-    def __init__(self, nodes, edges='fc', edge_attr=None):
+    def __init__(self, nodes, pos=None, edges='fc', edge_attr=None):
         '''
 
         :param nodes: tensor, size() --> (n_nodes, n_features)
@@ -23,7 +25,8 @@ class Graph:
         #self.adjacency = self._create_adjacency()
 
         self.adjacency, self.edges_dense, self.edge_attr_dense = None, None, None
-
+        self.pos = pos
+        
     def set_edge_attr(self, edge_attr):
         self.edge_attr = edge_attr
         self.check_validity()
@@ -114,7 +117,7 @@ class Graph:
         if self.edge_attr is not None:
             assert len(self.edges[0]) == self.edge_attr.size(0)
 
-def networkx2graph(G_nx):
+def networkx2graph(G_nx, with_pos=False):
     mapping = {}
     for idx, node in enumerate(G_nx.nodes):
         mapping[node] = idx
@@ -123,7 +126,13 @@ def networkx2graph(G_nx):
     rows = torch.LongTensor([edge[0] for edge in G_nx.edges])
     cols = torch.LongTensor([edge[1] for edge in G_nx.edges])
     edges = [rows, cols]
-    graph = Graph(nodes, edges, edge_attr=None)
+    pos = None
+    if with_pos:
+        pos = nx.spring_layout(G_nx, seed=POS_SEED)
+    graph = Graph(nodes=nodes,
+                  pos=pos,
+                  edges=edges,
+                  edge_attr=None)
     return graph
 
 
@@ -135,7 +144,7 @@ def graph2networkx(G):
 
 def plot_graph(graph):
     graph_nx = graph2networkx(graph)
-    nx.draw(graph_nx)
+    nx.draw(graph_nx, pos=graph.pos)
     plt.show()
 
 def plot_networkx(graph_nx, path='graph_plot.png'):
