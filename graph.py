@@ -1,5 +1,6 @@
 import torch
 import networkx as nx
+import numpy as np
 #matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -30,6 +31,10 @@ class Graph:
     def set_edge_attr(self, edge_attr):
         self.edge_attr = edge_attr
         self.check_validity()
+
+    def get_coords(self):
+        coords = torch.Tensor(np.array(list(self.pos.values())))
+        return coords
 
     def get_num_nodes(self):
         return self.nodes.size(0)

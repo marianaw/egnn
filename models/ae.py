@@ -37,8 +37,8 @@ class AE_parent(nn.Module):
             adj_pred = adj_pred * (1 - torch.eye(n_nodes).to(self.device))
         return adj_pred
 
-    def forward(self, nodes, edges, edge_attr=None):
-        x = self.encode(nodes, edges, edge_attr)
+    def forward(self, nodes, edges, coords=None, edge_attr=None):
+        x = self.encode(nodes, edges, coords, edge_attr)
         adj_pred = self.decode(x)
         return adj_pred, x
 
@@ -66,7 +66,7 @@ class AE(AE_parent):
     def decode(self, x):
         return self.decode_from_x(x, linear_layer=self.fc_dec)
 
-    def encode(self, nodes, edges, edge_attr=None):
+    def encode(self, nodes, edges, coords=None, edge_attr=None):
         if self.noise_dim:
             nodes = torch.randn(nodes.size(0), self.noise_dim).to(self.device)
         h, _ = self._modules["gcl_0"](nodes, edges, edge_attr=edge_attr)
@@ -95,7 +95,7 @@ class AE_rf(AE_parent):
     def decode(self, x):
         return self.decode_from_x(x, C=self.w, b=self.b)
 
-    def encode(self, nodes, edges, edge_attr=None):
+    def encode(self, nodes, edges, coords=None, edge_attr=None):
         x = torch.randn(nodes.size(0), self.embedding_nf).to(self.device)
         for i in range(0, self.n_layers):
             x, _ = self._modules["gcl_%d" % i](x, edges, edge_attr=edge_attr)
@@ -104,7 +104,7 @@ class AE_rf(AE_parent):
 
 
 class AE_EGNN(AE_parent):
-    def __init__(self, hidden_nf, K=8, device='cpu', act_fn=nn.SiLU(), n_layers=4, reg = 1e-3, clamp=False):
+    def __init__(self, hidden_nf, input_nf=1, K=8, device='cpu', act_fn=nn.SiLU(), n_layers=4, reg = 1e-3, clamp=False):
         super(AE_EGNN, self).__init__()
         self.hidden_nf = hidden_nf
         self.K = K
@@ -112,7 +112,7 @@ class AE_EGNN(AE_parent):
         self.n_layers = n_layers
         self.reg = reg
         ### Encoder
-        self.add_module("gcl_0", E_GCL(1, self.hidden_nf, self.hidden_nf, edges_in_d=1, act_fn=act_fn, recurrent=False, clamp=clamp))
+        self.add_module("gcl_0", E_GCL(input_nf, self.hidden_nf, self.hidden_nf, edges_in_d=1, act_fn=act_fn, recurrent=False, clamp=clamp))
         for i in range(1, n_layers):
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=1, act_fn=act_fn, recurrent=True, clamp=clamp))
         #self.fc_emb = nn.Linear(self.hidden_nf, self.embedding_nf)
@@ -125,9 +125,10 @@ class AE_EGNN(AE_parent):
     def decode(self, x):
         return self.decode_from_x(x, C=self.w, b=self.b)
 
-    def encode(self, h, edges, edge_attr=None):
-        coords = torch.randn(h.size(0), self.K).to(self.device)
-        #h, coords, _ = self._modules["gcl_0"](nodes, edges, coords, edge_attr=edge_attr)
+    def encode(self, h, edges, coords=None, edge_attr=None):
+        if coords is None:
+            coords = torch.randn(h.size(0), self.K).to(self.device)
+
         for i in range(0, self.n_layers):
             h, coords, _ = self._modules["gcl_%d" % i](h, edges, coords, edge_attr=edge_attr)
             coords -= self.reg * coords

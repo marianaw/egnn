@@ -71,6 +71,11 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 utils.create_folders(args)
 
+if args.with_pos:
+    print('=======')
+    print('Using coordinates')
+    print('=======')
+
 #
 dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="train", directed=True, n_nodes=args.n_nodes)
 train_loader = Dataloader(dataset, batch_size=1)
@@ -112,13 +117,18 @@ def train(epoch, loader):
     magnitudes = {'value':0, 'counter':0}
     for batch_idx, data in enumerate(loader):
         graph = data[0]
+        coords = graph.get_coords()
+        coords = coords.to(device)
+
+        if coords is None:
+            print('\n\n Coords not provided \n\n')
 
         nodes, edges, edge_attr, adj_gt = graph.get_dense_graph(store=True, loops=False)
         nodes, edges, edge_attr, adj_gt = nodes.to(device), [edges[0].to(device), edges[1].to(device)], edge_attr.to(device), adj_gt.to(device).detach()
         n_nodes = nodes.size(0)
         optimizer.zero_grad()
 
-        adj_pred, z = model(nodes, edges, edge_attr)
+        adj_pred, z = model(nodes, edges, coords, edge_attr)
         bce, kl = losess.vae_loss(adj_pred, adj_gt, None, None)
         kl_coords = torch.zeros(1)
         loss = bce
@@ -157,10 +167,13 @@ def test(epoch, loader):
         for idx, data in enumerate(loader):
             graph = data[0]
             n_nodes = graph.get_num_nodes()
+            coords = graph.get_coords()
+            coords = coords.to(device)
+
             nodes, edges, edge_attr, adj_gt = graph.get_dense_graph(store=True, loops=False)
             nodes, edges, edge_attr, adj_gt = nodes.to(device), [edges[0].to(device), edges[1].to(device)], edge_attr.to(device), adj_gt.to(device)
 
-            adj_pred, mu = model(nodes, edges, edge_attr)
+            adj_pred, mu = model(nodes, edges, coords, edge_attr)
             bce, kl = losess.vae_loss(adj_pred, adj_gt, None, None)
             loss = bce
 
