@@ -18,7 +18,7 @@ parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--dataset', type=str, default='community_ours', metavar='N',
                     help='community_ours | community_overfit | erdosrenyinodes_0.25_none | erdosrenyinodes_0.25_overfit')
-parser.add_argument('--no-cuda', action='store_true', default=True,
+parser.add_argument('--no-cuda', action='store_false', default=False,
                     help='we  did not use cuda in this experiment')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
@@ -101,7 +101,7 @@ pr = eval.ProgressReporter(path=args.outf + '/' + args.exp_name, file_name='/out
 
 def checkpoint(model_path):
     torch.save(model.state_dict(), model_path)
-    
+
 
 def train(epoch, loader):
     lr_scheduler.step(epoch)
