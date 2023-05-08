@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import os
 import torch
 import torch.utils.data
 from torch import nn, optim
@@ -97,6 +98,10 @@ lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs
 
 pr = eval.ProgressReporter(path=args.outf + '/' + args.exp_name, file_name='/output.json')
 
+
+def checkpoint(model_path):
+    torch.save(model.state_dict(), model_path)
+    
 
 def train(epoch, loader):
     lr_scheduler.step(epoch)
@@ -208,5 +213,8 @@ if __name__ == "__main__":
                                                                                      best_res_test['wrong_edges']/best_res_test['possible_edges'],
                                                                                      best_epoch))
             print("###############")
+
+    model_path = os.path.join(args.outf, args.exp_name, 'model.pt')
+    checkpoint(model_path)
 
 
