@@ -168,8 +168,12 @@ def test(epoch, loader):
         for idx, data in enumerate(loader):
             graph = data[0]
             n_nodes = graph.get_num_nodes()
-            coords = graph.get_coords()
-            coords = coords.to(device)
+            
+            if args.with_pos:
+                coords = graph.get_coords()
+                coords = coords.to(device)
+            else:
+                coords = None
 
             nodes, edges, edge_attr, adj_gt = graph.get_dense_graph(store=True, loops=False)
             nodes, edges, edge_attr, adj_gt = nodes.to(device), [edges[0].to(device), edges[1].to(device)], edge_attr.to(device), adj_gt.to(device)
