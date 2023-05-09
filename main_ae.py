@@ -20,8 +20,8 @@ parser.add_argument('--dataset', type=str, default='community_ours', metavar='N'
                     help='community_ours | community_overfit | erdosrenyinodes_0.25_none | erdosrenyinodes_0.25_overfit')
 parser.add_argument('--no-cuda', action='store_false', default=False,
                     help='we  did not use cuda in this experiment')
-parser.add_argument('--with_pos', action='store_true', default=True,
-                    help='we  did not use cuda in this experiment')
+parser.add_argument('--with_pos', default=1, type=int,
+                    help='Use coordinates in the model or not. Defaults to True.')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log_interval', type=int, default=100, metavar='N',
