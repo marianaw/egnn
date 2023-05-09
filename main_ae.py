@@ -124,9 +124,6 @@ def train(epoch, loader):
         else:
             coords = None
 
-        if coords is None:
-            print('\n\n Coords not provided \n\n')
-
         nodes, edges, edge_attr, adj_gt = graph.get_dense_graph(store=True, loops=False)
         nodes, edges, edge_attr, adj_gt = nodes.to(device), [edges[0].to(device), edges[1].to(device)], edge_attr.to(device), adj_gt.to(device).detach()
         n_nodes = nodes.size(0)
