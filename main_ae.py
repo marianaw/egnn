@@ -117,8 +117,12 @@ def train(epoch, loader):
     magnitudes = {'value':0, 'counter':0}
     for batch_idx, data in enumerate(loader):
         graph = data[0]
-        coords = graph.get_coords()
-        coords = coords.to(device)
+
+        if args.with_pos:
+            coords = graph.get_coords()
+            coords = coords.to(device)
+        else:
+            coords = None
 
         if coords is None:
             print('\n\n Coords not provided \n\n')
