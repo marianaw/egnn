@@ -185,13 +185,13 @@ class DatasetCommunity(Dataset):
         for k in range(self.n_samples):
             # c_sizes = np.random.choice([6, 7, 8, 9, 10], self.num_communities)
             # c_sizes = np.random.choice([100], self.num_communities)
-            graphs.append(n_community(c_sizes, self.with_pos, p_inter=0.01, K=self.K))
+            graphs.append(n_community(c_sizes, self.with_pos, p_inter=0.01, K=self.K, seed=k))
         return graphs
 
 
 
-def n_community(c_sizes, with_pos, p_inter=0.01, K=2):
-    graphs = [nx.gnp_random_graph(c_sizes[i], 0.7, seed=i) for i in range(len(c_sizes))]
+def n_community(c_sizes, with_pos, p_inter=0.01, K=2, seed=42):
+    graphs = [nx.gnp_random_graph(c_sizes[i], 0.7, seed=seed) for i in range(len(c_sizes))]
     G = nx.disjoint_union_all(graphs)
     # communities = list(nx.connected_component_subgraphs(G))
     communities = list(G.subgraph(c) for c in nx.connected_components(G)) #[0]
