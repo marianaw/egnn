@@ -9,101 +9,91 @@ from ae_datasets import d_selector, Dataloader
 import models
 import losess
 import eval
+import yaml
+import shutil
 
 
 parser = argparse.ArgumentParser(description='VAE MNIST Example')
-parser.add_argument('--exp_name', type=str, default='exp_1', metavar='N',
-                    help='experiment_name')
-parser.add_argument('--epochs', type=int, default=100, metavar='N',
-                    help='number of epochs to train (default: 10)')
-parser.add_argument('--dataset', type=str, default='community_ours', metavar='N',
-                    help='community_ours | community_overfit | erdosrenyinodes_0.25_none | erdosrenyinodes_0.25_overfit')
-parser.add_argument('--no-cuda', action='store_false', default=False,
-                    help='we  did not use cuda in this experiment')
-parser.add_argument('--with_pos', default=1, type=int,
-                    help='Use coordinates in the model or not. Defaults to True.')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
-parser.add_argument('--log_interval', type=int, default=100, metavar='N',
-                    help='how many batches to wait before logging training status')
-parser.add_argument('--test_interval', type=int, default=2, metavar='N',
-                    help='how many epochs to wait before logging test')
-parser.add_argument('--generate-interval', type=int, default=100, metavar='N',
-                    help='how many epochs to wait before logging test')
-parser.add_argument('--outf', type=str, default='outputs_ae', metavar='N',
-                    help='folder to output vae')
-parser.add_argument('--plots', type=int, default=0, metavar='N',
-                    help='Plot images of the graphs & adjacency matrices')
-parser.add_argument('--lr', type=float, default=1e-4, metavar='N',
-                    help='learning rate')
-parser.add_argument('--nf', type=int, default=64, metavar='N',
-                    help='learning rate')
-parser.add_argument('--emb_nf', type=int, default=8, metavar='N',
-                    help='learning rate')
-parser.add_argument('--K', type=int, default=8, metavar='N',
-                    help='learning rate')
-parser.add_argument('--model', type=str, default='ae_egnn', metavar='N',
-                    help='available models: ae | ae_rf | ae_egnn | baseline')
-parser.add_argument('--attention', type=int, default=0, metavar='N',
-                    help='attention in the ae model')
-parser.add_argument('--noise_dim', type=int, default=0, metavar='N',
-                    help='break the symmetry applying noise at the input of the AE')
-parser.add_argument('--n_layers', type=int, default=4, metavar='N',
-                    help='number of layers for the autoencoder')
-parser.add_argument('--reg', type=float, default=1e-3, metavar='N',
-                    help='regularizer for the equivariant autoencoder')
-parser.add_argument('--clamp', type=int, default=1, metavar='N',
-                    help='clamp the output of the coords function if get too large (safe mechanism, it is not activated in practice)')
-parser.add_argument('--weight_decay', type=float, default=1e-16, metavar='N',
-                    help='clamp the output of the coords function if get too large')
-parser.add_argument('--n_nodes', type=int, default=10, metavar='N',
-                    help='Nb of nodes in graphs. Defaults to 10.')
-
-
+parser.add_argument('--config', type=str, default='configs/config.yaml',
+                    help='Configuration file with hyperparameters.')
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
-print(args)
 
-print(args)
-torch.manual_seed(args.seed)
-device = torch.device("cuda" if args.cuda else "cpu")
-kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
+print(config)
 
-utils.create_folders(args)
+plots = config.get('plots', 0)
+exp_name = config.get('exp_name', 'exp_1')
+seed = config.get('seed', 1)
+outf = config.get('outf', 'outputs_ae')
 
-if args.with_pos:
+train = config['train']
+epochs = train.get('epochs', 100)
+no_cuda = train.get('no-cuda', 0)
+log_interval = train.get('log_interval', 100)
+test_interval = train.get('test_interval', 2)
+generate_interval = train.get('generate-interval', 100)
+lr = float(train.get('lr', 1e-4))
+
+data = config['data']
+dataset_name = data.get('dataset', 'community_ours')
+with_pos = data.get('with_pos', 1)
+n_nodes = data.get('n_nodes', 10)
+  
+model_dict = config['model']
+model = model_dict.get('model', 'ae_egnn')
+nf = model_dict.get('nf', 64)
+emb_nf = model_dict.get('emb_nf', 8)
+K = model_dict.get('K', 2)
+attention = model_dict.get('attention', 0)
+noise_dim = model_dict.get('noise_dim', 0)
+n_layers = model_dict.get('n_layers', 4)
+reg = float(model_dict.get('reg', 1e-3))
+clamp = model_dict.get('clamp', 1)
+weight_decay = float(model_dict.get('weight_decay', 1e-16))
+
+
+
+use_cuda = not no_cuda and torch.cuda.is_available()
+
+torch.manual_seed(seed)
+device = torch.device("cuda" if use_cuda else "cpu")
+kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
+
+utils.create_folders(outf, exp_name)
+
+if with_pos:
     print('=======')
     print('Using coordinates')
     print('=======')
 
 #
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="train", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="train", directed=True, n_nodes=n_nodes)
 train_loader = Dataloader(dataset, batch_size=1)
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="val", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="val", directed=True, n_nodes=n_nodes)
 val_loader = Dataloader(dataset, batch_size=1, shuffle=False)
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="test", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="test", directed=True, n_nodes=n_nodes)
 test_loader = Dataloader(dataset, batch_size=1, shuffle=False)
 
-if args.model == 'ae':
-    model = models.AE(hidden_nf=args.nf, embedding_nf=args.emb_nf, noise_dim=args.noise_dim, act_fn=nn.SiLU(),
-                      learnable_dec=1, device=device, attention=args.attention, n_layers=args.n_layers)
-elif args.model == 'ae_rf':
-    model = models.AE_rf(embedding_nf=args.K, nf=args.nf, device=device, n_layers=args.n_layers, reg=args.reg,
-                         act_fn=nn.SiLU(), clamp=args.clamp)
-elif args.model == 'ae_egnn':
-    model = models.AE_EGNN(hidden_nf=args.nf, K=args.K, act_fn=nn.SiLU(), device=device, n_layers=args.n_layers,
-                           reg=args.reg, clamp=args.clamp)
-elif args.model == 'baseline':
+if model == 'ae':
+    model = models.AE(hidden_nf=nf, embedding_nf=emb_nf, noise_dim=noise_dim, act_fn=nn.SiLU(),
+                      learnable_dec=1, device=device, attention=attention, n_layers=n_layers)
+elif model == 'ae_rf':
+    model = models.AE_rf(embedding_nf=K, nf=nf, device=device, n_layers=n_layers, reg=reg,
+                         act_fn=nn.SiLU(), clamp=clamp)
+elif model == 'ae_egnn':
+    model = models.AE_EGNN(hidden_nf=nf, K=K, act_fn=nn.SiLU(), device=device, n_layers=n_layers,
+                           reg=reg, clamp=clamp)
+elif model == 'baseline':
     model = models.Baseline(device=device)
 else:
-    raise Exception('Wrong model %s' % args.model)
+    raise Exception('Wrong model %s' % model)
 
 print(model)
 
-optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
 
-pr = eval.ProgressReporter(path=args.outf + '/' + args.exp_name, file_name='/output.json')
+pr = eval.ProgressReporter(path=outf + '/' + exp_name, file_name='/output.json')
 
 
 def checkpoint(model_path):
@@ -118,7 +108,7 @@ def train(epoch, loader):
     for batch_idx, data in enumerate(loader):
         graph = data[0]
 
-        if args.with_pos:
+        if with_pos:
             coords = graph.get_coords()
             coords = coords.to(device)
         else:
@@ -150,7 +140,7 @@ def train(epoch, loader):
         res['wrong_edges'] += wrong_edges
         res['gt_edges'] += torch.sum(adj_gt).item()
         res['possible_edges'] += n_nodes ** 2 - n_nodes
-        if batch_idx % args.log_interval == 0:
+        if batch_idx % log_interval == 0:
             print('===> Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
@@ -169,7 +159,7 @@ def test(epoch, loader):
             graph = data[0]
             n_nodes = graph.get_num_nodes()
             
-            if args.with_pos:
+            if with_pos:
                 coords = graph.get_coords()
                 coords = coords.to(device)
             else:
@@ -215,14 +205,17 @@ def test(epoch, loader):
 
 if __name__ == "__main__":
 
-    torch.manual_seed(42)
-
     best_bce_val = 1e8
     best_res_test = None
     best_epoch = 0
-    for epoch in range(0, args.epochs):
+
+    # Copy config file to keep track of the experiment
+    new_path = os.path.join(outf, exp_name, 'config.yaml')
+    shutil.copy(args.config, new_path)
+
+    for epoch in range(0, epochs):
         train(epoch, train_loader)
-        if epoch % args.test_interval == 0:
+        if epoch % test_interval == 0:
             res_train = test(epoch, train_loader)
             res_val = test(epoch, val_loader)
             res_test = test(epoch, test_loader)
@@ -237,7 +230,7 @@ if __name__ == "__main__":
                                                                                      best_epoch))
             print("###############")
 
-    model_path = os.path.join(args.outf, args.exp_name, 'model.pt')
+    model_path = os.path.join(outf, exp_name, 'model.pt')
     checkpoint(model_path)
 
 

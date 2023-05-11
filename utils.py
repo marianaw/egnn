@@ -5,24 +5,24 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 
-def create_folders(args):
+def create_folders(outf, exp_name):
     try:
-        os.makedirs(args.outf)
+        os.makedirs(outf)
     except OSError:
         pass
 
     try:
-        os.makedirs(args.outf + '/' + args.exp_name)
+        os.makedirs(outf + '/' +exp_name)
     except OSError:
         pass
 
     try:
-        os.makedirs(args.outf + '/' + args.exp_name + '/images_recon')
+        os.makedirs(outf + '/' + exp_name + '/images_recon')
     except OSError:
         pass
 
     try:
-        os.makedirs(args.outf + '/' + args.exp_name + '/images_gen')
+        os.makedirs(outf + '/' + exp_name + '/images_gen')
     except OSError:
         pass
 

@@ -1,0 +1,30 @@
+plots: 0
+exp_name: probando
+seed: 1
+outf: /Users/mariana/Documents/projects/Graphs/EGNN_VAE/nodes_10_community
+
+train:
+  epochs: 100
+  no-cuda: 0
+  log_interval: 100
+  test_interval: 2
+  generate-interval: 100
+  lr: 1e-4
+
+data:
+  dataset: community_ours
+  with_pos: 1
+  n_nodes: 10
+  
+model:
+  model: ae_egnn
+  nf: 64
+  emb_nf: 8
+  K: 3
+  attention: 0
+  noise_dim: 0
+  n_layers: 4
+  reg: 1e-3
+  clamp: 1
+  weight_decay: 1e-16
+  
