@@ -33,7 +33,10 @@ class Graph:
         self.check_validity()
 
     def get_coords(self):
-        coords = torch.Tensor(np.array(list(self.pos.values())))
+        if self.pos is not None:
+            coords = torch.Tensor(np.array(list(self.pos.values())))
+        else:
+            coords = None
         return coords
 
     def get_num_nodes(self):
@@ -122,7 +125,7 @@ class Graph:
         if self.edge_attr is not None:
             assert len(self.edges[0]) == self.edge_attr.size(0)
 
-def networkx2graph(G_nx, with_pos=False):
+def networkx2graph(G_nx, with_pos=False, K=2):
     mapping = {}
     for idx, node in enumerate(G_nx.nodes):
         mapping[node] = idx
@@ -133,7 +136,7 @@ def networkx2graph(G_nx, with_pos=False):
     edges = [rows, cols]
     pos = None
     if with_pos:
-        pos = nx.spring_layout(G_nx, seed=POS_SEED)
+        pos = nx.spring_layout(G_nx, dim=K, seed=POS_SEED)
     graph = Graph(nodes=nodes,
                   pos=pos,
                   edges=edges,
@@ -149,7 +152,12 @@ def graph2networkx(G):
 
 def plot_graph(graph):
     graph_nx = graph2networkx(graph)
-    nx.draw(graph_nx, pos=graph.pos)
+    pos = graph.pos
+    if pos is not None:
+        if pos[0].shape[0] > 2:
+            pos = None
+
+    nx.draw(graph_nx, pos=pos)
     plt.show()
 
 def plot_networkx(graph_nx, path='graph_plot.png'):

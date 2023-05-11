@@ -77,11 +77,11 @@ if args.with_pos:
     print('=======')
 
 #
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="train", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="train", directed=True, n_nodes=args.n_nodes)
 train_loader = Dataloader(dataset, batch_size=1)
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="val", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="val", directed=True, n_nodes=args.n_nodes)
 val_loader = Dataloader(dataset, batch_size=1, shuffle=False)
-dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, partition="test", directed=True, n_nodes=args.n_nodes)
+dataset = d_selector.retrieve_dataset(args.dataset, with_pos=args.with_pos, K=args.K, partition="test", directed=True, n_nodes=args.n_nodes)
 test_loader = Dataloader(dataset, batch_size=1, shuffle=False)
 
 if args.model == 'ae':
@@ -214,6 +214,9 @@ def test(epoch, loader):
 
 
 if __name__ == "__main__":
+
+    torch.manual_seed(42)
+
     best_bce_val = 1e8
     best_res_test = None
     best_epoch = 0
