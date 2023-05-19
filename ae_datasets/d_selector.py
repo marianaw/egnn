@@ -2,7 +2,7 @@ import graph
 from ae_datasets import d_creator
 
 
-def retrieve_dataset(dataset_name, n_nodes, with_pos, K, partition='train', directed=True):
+def retrieve_dataset(dataset_name, n_nodes, with_pos, K, partition='train', directed=True, num_communities=2):
     '''
 
     :param dataset_name: 'erdosrenyinodes_0.25_none'
@@ -20,9 +20,9 @@ def retrieve_dataset(dataset_name, n_nodes, with_pos, K, partition='train', dire
         _, n_samples, n_nodes, n_edges = dataset_name.split("_")
         dataset = d_creator.DatasetErdosRenyi(None, int(n_nodes), int(n_edges), partition, directed)
     elif dataset_name == "community_ours":
-        dataset = d_creator.DatasetCommunity(partition=partition, n_nodes=n_nodes, with_pos=with_pos, K=K)
+        dataset = d_creator.DatasetCommunity(partition=partition, n_nodes=n_nodes, with_pos=with_pos, K=K, num_communities=num_communities)
     elif dataset_name == "community_overfit":
-        dataset = d_creator.DatasetCommunity(n_samples=100, with_pos=with_pos, K=K)
+        dataset = d_creator.DatasetCommunity(n_samples=100, with_pos=with_pos, K=K, num_communities=num_communities)
     else:
         raise Exception("Wrong dataset %s" % dataset_name)
     return dataset

@@ -1,10 +1,10 @@
 plots: 0
 exp_name: probando
 seed: 1
-outf: /Users/mariana/Documents/projects/Graphs/EGNN_VAE/nodes_10_community
+outf: /Users/mariana/Documents/projects/Graphs/EGNN_VAE/nodes_10_erdos
 
 train:
-  epochs: 100
+  epochs: 2
   no-cuda: 0
   log_interval: 100
   test_interval: 2
@@ -12,8 +12,8 @@ train:
   lr: 1e-4
 
 data:
-  dataset: community_ours
-  with_pos: 1
+  dataset: erdosrenyinodes_0.25_none
+  with_pos: 0
   n_nodes: 10
   
 model:

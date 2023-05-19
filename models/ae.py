@@ -118,8 +118,8 @@ class AE_EGNN(AE_parent):
         #self.fc_emb = nn.Linear(self.hidden_nf, self.embedding_nf)
 
         ### Decoder
-        self.w = nn.Parameter(-0.1*torch.ones(1)).to(device)
-        self.b = nn.Parameter(torch.ones(1)).to(device)
+        self.w = nn.Parameter(-0.1*torch.ones(1).to(device))
+        self.b = nn.Parameter(torch.ones(1).to(device))
         self.to(self.device)
 
     def decode(self, x):
