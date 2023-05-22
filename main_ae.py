@@ -38,6 +38,7 @@ data = config['data']
 dataset_name = data.get('dataset', 'community_ours')
 with_pos = data.get('with_pos', 1)
 n_nodes = data.get('n_nodes', 10)
+n_communities = data.get('n_communities', 2)
   
 model_dict = config['model']
 model = model_dict.get('model', 'ae_egnn')
@@ -67,11 +68,14 @@ if with_pos:
     print('=======')
 
 #
-dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="train", directed=True, n_nodes=n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="train", directed=True,
+                                      n_nodes=n_nodes, num_communities=n_communities)
 train_loader = Dataloader(dataset, batch_size=1)
-dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="val", directed=True, n_nodes=n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="val", directed=True, 
+                                      n_nodes=n_nodes, num_communities=n_communities)
 val_loader = Dataloader(dataset, batch_size=1, shuffle=False)
-dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="test", directed=True, n_nodes=n_nodes)
+dataset = d_selector.retrieve_dataset(dataset_name, with_pos=with_pos, K=K, partition="test", directed=True, 
+                                      n_nodes=n_nodes, num_communities=n_communities)
 test_loader = Dataloader(dataset, batch_size=1, shuffle=False)
 
 if model == 'ae':
@@ -119,6 +123,7 @@ def train(epoch, loader):
         n_nodes = nodes.size(0)
         optimizer.zero_grad()
 
+        import ipdb; ipdb.set_trace()
         adj_pred, z = model(nodes, edges, coords, edge_attr)
         bce, kl = losess.vae_loss(adj_pred, adj_gt, None, None)
         kl_coords = torch.zeros(1)
