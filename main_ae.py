@@ -123,7 +123,6 @@ def train(epoch, loader):
         n_nodes = nodes.size(0)
         optimizer.zero_grad()
 
-        import ipdb; ipdb.set_trace()
         adj_pred, z = model(nodes, edges, coords, edge_attr)
         bce, kl = losess.vae_loss(adj_pred, adj_gt, None, None)
         kl_coords = torch.zeros(1)
