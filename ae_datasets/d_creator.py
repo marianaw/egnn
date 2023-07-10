@@ -185,8 +185,8 @@ class DatasetCommunity(Dataset):
 def n_community(c_sizes, p_inter=0.01):
     graphs = [nx.gnp_random_graph(c_sizes[i], 0.7, seed=i) for i in range(len(c_sizes))]
     G = nx.disjoint_union_all(graphs)
-    communities = list(nx.connected_component_subgraphs(G))
-    #communities = list(G.subgraph(c) for c in nx.connected_components(G))[0]
+    # communities = list(nx.connected_component_subgraphs(G))
+    communities = list(G.subgraph(c) for c in nx.connected_components(G))
     for i in range(len(communities)):
         subG1 = communities[i]
         nodes1 = list(subG1.nodes())
