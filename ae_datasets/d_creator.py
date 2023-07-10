@@ -187,7 +187,46 @@ class DatasetCommunity(Dataset):
             # c_sizes = np.random.choice([100], self.num_communities)
             graphs.append(n_community(c_sizes, self.with_pos, p_inter=0.01, K=self.K, seed=k))
         return graphs
+    
 
+class DatasetCommunities(Dataset):
+    def __init__(self, n_samples=None, partition='train', num_communities=[4, 5, 8, 10], n_nodes=Lausanne  , seed=42,
+                 with_pos=False, K=2):
+
+        self.partition = partition
+        self.num_communities = num_communities
+        self.with_pos = with_pos
+        self.n_nodes = n_nodes
+        self.K = K
+
+        if n_samples is None:
+            if partition == 'train':
+                self.n_samples = 5000
+                self.seed = 0
+            elif partition == 'val':
+                self.n_samples = 500
+                self.seed = 1
+            elif partition == 'test':
+                self.n_samples = 500
+                self.seed = 2
+            else:
+                raise Exception("Wrong seed")
+        else:
+            self.n_samples = n_samples
+            self.seed = seed
+        self.graphs = self.create()
+
+    def create(self):
+        np.random.seed(self.seed)
+        graphs = []
+        print('Creating dataset with ', self.num_communities, ' communities')
+
+        c_sizes = self.c_sizes
+        for k in range(self.n_samples):
+            num_comm = np.random.choice(self.num_communities)
+            c_sizes = [self.n_nodes//num_comm] * num_comm
+            graphs.append(n_community(c_sizes, self.with_pos, p_inter=0.01, K=self.K, seed=k))
+        return graphs
 
 
 def n_community(c_sizes, with_pos, p_inter=0.01, K=2, seed=42):

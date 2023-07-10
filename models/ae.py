@@ -36,6 +36,9 @@ class AE_parent(nn.Module):
         if remove_diagonal:
             adj_pred = adj_pred * (1 - torch.eye(n_nodes).to(self.device))
         return adj_pred
+    
+    def decode_prod(self, x):
+        return torch.mm(x, x.t())
 
     def forward(self, nodes, edges, coords=None, edge_attr=None):
         x = self.encode(nodes, edges, coords, edge_attr)

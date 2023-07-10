@@ -21,6 +21,8 @@ def retrieve_dataset(dataset_name, n_nodes, with_pos, K, partition='train', dire
         dataset = d_creator.DatasetErdosRenyi(None, int(n_nodes), int(n_edges), partition, directed)
     elif dataset_name == "community_ours":
         dataset = d_creator.DatasetCommunity(partition=partition, n_nodes=n_nodes, with_pos=with_pos, K=K, num_communities=num_communities)
+    elif dataset_name == "communities":
+        dataset = d_creator.DatasetCommunities(partition=partition, n_nodes=n_nodes, with_pos=with_pos, K=K, num_communities=num_communities)
     elif dataset_name == "community_overfit":
         dataset = d_creator.DatasetCommunity(n_samples=100, with_pos=with_pos, K=K, num_communities=num_communities)
     else:
