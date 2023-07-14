@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import os
 import torch
 import torch.utils.data
 from torch import nn, optim
@@ -17,7 +18,7 @@ parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--dataset', type=str, default='community_ours', metavar='N',
                     help='community_ours | community_overfit | erdosrenyinodes_0.25_none | erdosrenyinodes_0.25_overfit')
-parser.add_argument('--no-cuda', action='store_true', default=True,
+parser.add_argument('--no-cuda', action='store_false', default=False,
                     help='we  did not use cuda in this experiment')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
@@ -58,7 +59,6 @@ args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
 
-print(args)
 torch.manual_seed(args.seed)
 device = torch.device("cuda" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
@@ -206,4 +206,4 @@ if __name__ == "__main__":
                                                                                      best_epoch))
             print("###############")
 
-
+    torch.save(model.state_dict(), os.path.join(args.outf, args.exp_name, 'model.pth'))

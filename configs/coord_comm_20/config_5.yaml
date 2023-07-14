@@ -1,0 +1,31 @@
+plots: 0
+exp_name: seed_5
+seed: 5
+# outf: /Users/mariana/Documents/projects/Graphs/EGNN_VAE/nodes_100_community
+outf: /home/mvargas/code/Graphs/EGNN_VAE/nodes_20_community/coord_dim3/
+
+train:
+  epochs: 150
+  no-cuda: 0
+  log_interval: 100
+  test_interval: 2
+  generate-interval: 100
+  lr: 1e-4
+
+data:
+  dataset: community_ours
+  with_pos: 1
+  n_nodes: 20
+  
+model:
+  model: ae_egnn
+  nf: 64
+  emb_nf: 8
+  K: 3
+  attention: 0
+  noise_dim: 0
+  n_layers: 4
+  reg: 1e-3
+  clamp: 1
+  weight_decay: 1e-16
+  
